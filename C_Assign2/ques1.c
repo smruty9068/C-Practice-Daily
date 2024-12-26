@@ -1,0 +1,1 @@
+// The advantages of using selection structures and repetition control structures over simple goto statements are readability, maintainability, easier debugging, clarity, simple login representation etc.

@@ -1,0 +1,394 @@
+1. Basics of C
+
+C is a general-purpose, procedural programming   language. 
+Key components include:
+Syntax: Rules for writing valid programs.
+Data Types: int, float, char, etc., define the type of data a variable can hold.
+Variables and Constants: Variables store values, while constants hold fixed values.
+Operators: Arithmetic (+, -), Relational (<, >), Logical (&&, ||), etc.
+
+#include <stdio.h>
+int main() {
+    int a = 5, b = 10;
+    int sum = a + b;
+    printf("Sum = %d\n", sum);
+    return 0;
+}
+
+
+2. Format Specifiers
+
+Used with printf and scanf to define how data is formatted during input/output operations:
+%d: Integer
+%f: Float
+%c: Character
+%s: String
+
+#include <stdio.h>
+int main() {
+    int x = 42;
+    float y = 3.14;
+    printf("Integer: %d, Float: %.2f\n", x, y);
+    return 0;
+}
+
+
+3. Control Statements
+
+Control statements determine the flow of execution.
+Conditional Statements: if, else, switch
+Loops: for, while, do-while
+Jump Statements: break, continue
+goto: 
+
+#include <stdio.h>
+int main() {
+    int num = 7;
+    if (num % 2 == 0) {
+        printf("Even\n");
+    } else {
+        printf("Odd\n");
+    }
+    return 0;
+}
+
+#include <stdio.h>
+int main() {
+    for (int i = 1; i <= 3; i++) {
+        for (int j = 1; j <= 3; j++) {
+            if (i == 2 && j == 2) {
+                goto exit_loops; // Break out of both loops
+            }
+            printf("i = %d, j = %d\n", i, j);
+        }  }
+exit_loops:
+    printf("Exited the loops.\n");
+    return 0;
+}
+
+#include <stdio.h>
+int main() {
+    int num = 10;
+    if (num > 0) {
+        goto positive; // Jump to the label if the condition is true
+    }
+    printf("Number is zero or negative.\n");
+    return 0;
+positive:
+    printf("Number is positive.\n");
+    return 0;
+}
+
+
+
+4. Functions & Recursion
+
+Functions encapsulate reusable blocks of code. Recursion involves a function calling itself.
+
+Example (Function):
+#include <stdio.h>
+int add(int a, int b) {
+    return a + b;
+}
+int main() {
+    printf("Sum = %d\n", add(3, 4));
+    return 0;
+}
+
+Example (Recursion):
+#include <stdio.h>
+int factorial(int n) {
+    if (n == 0) return 1;
+    return n * factorial(n - 1);
+}
+int main() {
+    printf("Factorial of 5 = %d\n", factorial(5));
+    return 0;
+}
+
+
+5. Arrays and Arrays with Pointers
+
+1D Arrays: Linear storage of elements.
+2D Arrays: Tabular storage (matrices).
+Pointers with Arrays: Access array elements using pointers.
+
+#include <stdio.h>
+int main() {
+    int arr[5] = {1, 2, 3, 4, 5};
+    int *p = arr; // Pointer to the first element
+    printf("Third element: %d\n", *(p + 2));
+    return 0;
+}
+
+#include <stdio.h>   //data_type array_name[rows][columns];
+int main() {
+    // Declaring and initializing a 2D array
+    int matrix[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    // Displaying the 2D array
+    printf("2D Array elements:\n");
+    for (int i = 0; i < 2; i++) {      // Loop through rows
+        for (int j = 0; j < 3; j++) {  // Loop through columns
+            printf("%d ", matrix[i][j]);       }
+        printf("\n");
+    }
+    return 0;
+}
+
+
+6. Pointers and Double Pointers
+
+Pointer: Stores the memory address of another variable.
+Double Pointer: Points to another pointer.
+
+#include <stdio.h>
+int main() {
+    int x = 10;
+    int *p = &x;
+    int **dp = &p;
+    printf("Value of x = %d\n", **dp);
+    return 0;
+}
+
+
+7. Strings and Strings with Pointers
+
+A string in C is a character array ending with \0. Strings can also be manipulated using pointers.
+
+#include <stdio.h>
+int main() {
+    char str[] = "Hello, World!";
+    char *p = str;
+    printf("String: %s\n", p);
+    return 0;
+}
+
+
+8. Structures
+
+Structures group variables of different types.
+
+#include <stdio.h>
+// Define a structure to represent a Student
+struct Student {
+    int id;           // Member to store the student's ID
+    char name[50];    // Member to store the student's name (max 50 characters)
+};
+int main() {
+    // Declare and initialize a structure variable of type 'Student'
+    struct Student s = {1, "Alice"}; // 's.id' is set to 1, 's.name' is set to "Alice"
+    // Print the values of the structure members
+    printf("ID: %d, Name: %s\n", s.id, s.name);
+    return 0; // Indicate successful program termination
+}
+
+
+
+9. Dynamic Memory Allocation
+
+Functions like malloc, calloc, and realloc allocate memory dynamically during runtime.
+
+#include <stdio.h>   // Standard I/O library for input and output functions
+#include <stdlib.h>  // Standard library for dynamic memory management functions
+int main() {
+            // Dynamically allocate memory for an array of 5 integers
+    int *ptr = (int*)malloc(5 * sizeof(int));
+            // 'malloc' allocates a contiguous block of memory of size '5 * sizeof(int)'
+            // '(int*)' casts the allocated memory to an integer pointer
+           // Check if memory allocation was successful
+    if (ptr == NULL) {
+        printf("Memory allocation failed\n");
+        return 1; // Exit the program if memory allocation fails
+    }
+          // Initialize the dynamically allocated array
+    for (int i = 0; i < 5; i++) {
+        ptr[i] = i; // Assign values 0, 1, 2, 3, 4 to the array elements
+    }
+          // Print the elements of the dynamically allocated array
+    printf("Array elements: ");
+    for (int i = 0; i < 5; i++) {
+        printf("%d ", ptr[i]); // Access and print each element using 'ptr[i]'
+    }
+    printf("\n"); // Print a newline after the array elements
+         // Free the dynamically allocated memory
+    free(ptr);
+         // This step is important to avoid memory leaks
+    return 0; // Indicate successful program termination
+}
+
+(" malloc(): Use when you only need memory allocation without initialization.Arguments-	Single: Size in bytes.	
+   calloc(): Use when you need memory allocation with zero initialization.Arguments- Two: Number of elements and size of each.	
+   realloc(): Use when you need to resize an existing memory block.Arguments- Pointer to current memory and new size. ")
+
+
+10. Linked List
+
+A linked list is a collection of nodes where each node contains data and a pointer to the next node
+
+#include <stdio.h>   // Standard I/O library for input and output functions
+#include <stdlib.h>  // Standard library for dynamic memory management functions
+
+// Define a structure for a node in a singly linked list
+struct Node {
+    int data;              // Integer to store the data of the node
+    struct Node* next;     // Pointer to the next node in the list
+};
+
+int main() {
+    // Dynamically allocate memory for the first node (head)
+    struct Node* head = (struct Node*)malloc(sizeof(struct Node));
+    if (head == NULL) { // Check if memory allocation was successful
+        printf("Memory allocation failed for head\n");
+        return 1;
+    }
+
+    // Dynamically allocate memory for the second node
+    struct Node* second = (struct Node*)malloc(sizeof(struct Node));
+    if (second == NULL) { // Check if memory allocation was successful
+        printf("Memory allocation failed for second\n");
+        free(head); // Free previously allocated memory
+        return 1;
+    }
+
+    // Initialize the first node (head)
+    head->data = 1;          // Assign the value 1 to the data of the head node
+    head->next = second;     // Make the 'next' of head point to the second node
+
+    // Initialize the second node
+    second->data = 2;        // Assign the value 2 to the data of the second node
+    second->next = NULL;     // The 'next' of the second node is NULL (end of the list)
+
+    // Traverse the linked list and print the data in each node
+    struct Node* temp = head; // Start from the head node
+    while (temp != NULL) {    // Continue until the current node is NULL
+        printf("%d ", temp->data); // Print the data of the current node
+        temp = temp->next;    // Move to the next node in the list
+    }
+    printf("\n"); // Print a newline for better readability
+
+    // Free the dynamically allocated memory to avoid memory leaks
+    free(head);
+    free(second);
+
+    return 0; // Indicate successful program termination
+}
+
+
+
+11. Basics of Process
+
+A process is a program in execution. Each process has a unique Process ID (PID). Functions like getpid() and getppid() can be used to fetch process IDs.
+
+#include <stdio.h>   // Include the standard input-output library for using printf()
+#include <unistd.h>  // Include the unistd.h library for process-related system calls like getpid() and getppid()
+int main() {
+    // Print the process ID of the current process
+    printf("Process ID: %d\n", getpid());
+    // getpid() is a system call that returns the unique process ID of the current process
+    // Print the parent process ID of the current process
+    printf("Parent Process ID: %d\n", getppid());
+    // getppid() is a system call that returns the process ID of the parent process of the current process
+    return 0; // Indicate successful program termination
+}
+
+
+
+12. Fork()
+
+fork() creates a new process (child process). The child process is a copy of the parent process.
+
+#include <stdio.h>   // Include the standard input-output library for using printf()
+#include <unistd.h>  // Include the unistd.h library for system calls like fork()
+int main() {
+    // Create a new process using fork()
+    if (fork() == 0) { 
+        // fork() returns 0 to the child process
+        printf("Child Process\n"); 
+        // This block is executed only by the child process
+    } else {
+        // fork() returns the child's process ID (non-zero) to the parent process
+        printf("Parent Process\n");
+        // This block is executed only by the parent process
+    }
+    return 0; // Indicate successful program termination
+}
+
+
+
+13. wait(), waitpid()
+
+wait() makes the parent process wait for child processes to terminate. waitpid() allows waiting for a specific child process.
+
+#include <stdio.h>       // Include the standard input-output library for using printf()
+#include <sys/wait.h>    // Include the library for wait() system call
+#include <unistd.h>      // Include the library for fork() system call
+int main() {
+    // Create a new process using fork()
+    if (fork() == 0) { 
+        // This block is executed only by the child process because fork() returns 0 for the child
+        printf("Child executing\n"); 
+        // The child process prints this message and terminates
+    } else {
+        // This block is executed only by the parent process
+        wait(NULL); 
+        // The parent process waits for the child process to complete
+        // wait(NULL) makes the parent process suspend execution until the child process exits
+        printf("Parent resumed after child\n"); 
+        // The parent process resumes execution after the child process terminates
+    }
+    return 0; // Indicate successful program termination
+}
+
+
+
+14. Pipes
+
+Pipes enable inter-process communication. Data written to one end of the pipe can be read from the other.
+
+#include <stdio.h>
+#include <unistd.h>
+int main() {
+    int fd[2]; // Declare an array to hold file descriptors for the pipe
+    pipe(fd); // Create a pipe; fd[0] will be the read end, and fd[1] will be the write end
+    if (fork() == 0) { // Create a child process
+        close(fd[0]); // Close the read end of the pipe (child doesn't need it)
+        char msg[] = "Hello Parent"; // Message to send to the parent
+        write(fd[1], msg, sizeof(msg)); // Write the message to the pipe
+    } else { // This block will execute in the parent process
+        close(fd[1]); // Close the write end of the pipe (parent doesn't need it)
+        char buffer[20]; // Buffer to store the received message
+        read(fd[0], buffer, sizeof(buffer)); // Read the message from the pipe
+        printf("Received: %s\n", buffer); // Print the received message
+    }
+    return 0; // Return from the main function
+}
+
+
+
+15. Semaphore
+
+A semaphore is used for process synchronization, especially when accessing shared resources.
+
+#include <stdio.h>
+#include <semaphore.h>  // For semaphore functions
+#include <fcntl.h>      // For O_CREAT flag used in sem_open()
+#include <unistd.h>     // For fork() function
+int main() {
+    // Create or open a named semaphore "/mysem", initialize it with a value of 1
+    sem_t *sem = sem_open("/mysem", O_CREAT, 0644, 1); 
+    // Check if the process is a child process (fork returns 0 for child)
+    if (fork() == 0) {  
+        sem_wait(sem); // Child waits (decrements) the semaphore value (locks the resource)
+        printf("Child accessing resource\n"); // Critical section, child accesses the shared resource
+        sem_post(sem); // Child releases (increments) the semaphore value (unlocks the resource)
+    } else {  // Parent process
+        sem_wait(sem); // Parent waits (decrements) the semaphore value (locks the resource)
+        printf("Parent accessing resource\n"); // Critical section, parent accesses the shared resource
+        sem_post(sem); // Parent releases (increments) the semaphore value (unlocks the resource)
+    }
+    // Close the semaphore, cleaning up after usage
+    sem_close(sem);  
+    // Unlink the semaphore to remove it from the system (freeing resources)
+    sem_unlink("/mysem");  
+    return 0;  // Exit the program
+}

@@ -1,0 +1,62 @@
+Structures in C are a user-defined data type that allows you to group multiple variables of different types under a single name.
+ They are used to represent a record or an entity with multiple attributes. 
+ Structures are particularly useful for organizing and handling complex data in a program.
+
+ struct StructureName {
+    data_type member1;
+    data_type member2;
+        // more members
+ };
+
+Example :- 
+#include <stdio.h>
+// Defining a structure
+struct Student {
+    int rollNumber;
+    char name[50];// name can store upto 49 charactres and terminated by a null character('\0')
+    float marks;
+};
+int main() {
+    // Creating a structure variable
+    struct Student student1;
+    // Assigning values to structure members
+    student1.rollNumber = 101;
+    strcpy(student1.name, "Alice");
+    student1.marks = 85.5;
+    // Accessing structure members
+    printf("Roll Number: %d\n", student1.rollNumber);
+    printf("Name: %s\n", student1.name);
+    printf("Marks: %.2f\n", student1.marks);
+    return 0;
+}
+
+
+
+
+Definition: The struct keyword is used to define a structure.
+Access Members: Use the dot operator (.) to access the members of a structure.
+Memory Allocation: Memory is allocated for all members when a structure variable is created.
+Nested Structures: Structures can contain other structures as members.
+Pointer to Structure: Structures can be accessed using pointers.
+
+
+struct person {
+    int ht;
+    float wt;
+    char color;
+} h; /* Declares a variable 'h' of type 'struct person' */
+
+
+
+
+struct person {
+    int ht;
+    float wt;
+    char color;
+    struct person *p; /* Pointer to another 'struct person' */
+};
+
+
+
+A union is a data structure where all members share the same memory location.
+A struct is a data structure where each member has its own memory.

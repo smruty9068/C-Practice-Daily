@@ -1,0 +1,130 @@
+A linked list is a data structure used in programming to store a collection of elements in a linear order.
+Unlike arrays, linked lists do not use contiguous memory locations. 
+Instead, they consist of nodes, where each node contains:
+
+Data: The value or information stored in the node.
+Pointer/Reference: A reference (or pointer) to the next node in the sequence.
+
+
+Types of Linked Lists
+1.Singly Linked List:
+Each node points to the next node in the sequence.
+The last node points to NULL (indicating the end of the list).
+[Data | Next] -> [Data | Next] -> NULL
+
+2.Doubly Linked List:
+Each node contains pointers to both the next and the previous nodes.
+NULL <- [Prev | Data | Next] <-> [Prev | Data | Next] -> NULL
+
+3.Circular Linked List:
+The last node points back to the first node, forming a loop.
+Can be singly or doubly linked.
+[Data | Next] -> [Data | Next] -> ... -> [Data | Next] -> (back to first node)
+
+
+Structure for a Node:-
+struct Node {
+    int data;             // Data part
+    struct Node* next;    // Pointer to the next node
+};
+
+BASIC OPERATION:-
+
+1. Creating a Linked List:-
+
+   #include <stdio.h>
+   #include <stdlib.h>
+     // Node structure
+   struct Node {
+     int data;
+     struct Node* next; };
+     // Function to create a new node
+     struct Node* createNode(int value) {
+     struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+     newNode->data = value;
+     newNode->next = NULL;
+     return newNode;
+}
+int main() {
+    // Creating nodes
+    struct Node* head = createNode(10);
+    struct Node* second = createNode(20);
+    struct Node* third = createNode(30);
+    // Linking nodes
+    head->next = second;
+    second->next = third;
+    // Traversing the linked list
+    struct Node* temp = head;
+    while (temp != NULL) {
+        printf("%d -> ", temp->data);
+        temp = temp->next;
+    }
+    printf("NULL\n");
+
+    return 0;
+}
+
+
+
+2. Inserting a Node:-
+  AT THE BEGINNING:-
+    void insertAtBeginning(struct Node** head, int value) {
+    struct Node* newNode = createNode(value);
+    newNode->next = *head;
+    *head = newNode;
+}
+
+  AT THE END:-
+    void insertAtEnd(struct Node* head, int value) {
+    struct Node* newNode = createNode(value);
+    struct Node* temp = head;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
+    temp->next = newNode;
+}
+
+
+3.Deleting a Node:-
+ BY VALUE:-
+ void deleteNode(struct Node** head, int key) {
+    struct Node* temp = *head, *prev = NULL;
+    // If head node itself holds the key
+    if (temp != NULL && temp->data == key) {
+        *head = temp->next; // Change head
+        free(temp);         // Free memory
+        return;
+    }
+    // Search for the key
+    while (temp != NULL && temp->data != key) {
+        prev = temp;
+        temp = temp->next;
+    }
+    // Key not found
+    if (temp == NULL) return;
+    // Unlink the node
+    prev->next = temp->next;
+    free(temp);
+}
+
+
+4.traversing a Linked List:-
+ void printList(struct Node* head) {
+    while (head != NULL) {
+        printf("%d -> ", head->data);
+        head = head->next;
+    }
+    printf("NULL\n");
+}
+
+
+
+Advantages of Linked Lists:-
+Dynamic Size: Can grow or shrink in size dynamically, unlike arrays.
+Efficient Insertions/Deletions: No need to shift elements as in arrays.
+Flexible Memory Usage: Memory is allocated as needed.
+
+Disadvantages of Linked Lists:-
+Memory Overhead: Extra memory is required for the pointers.
+Sequential Access: Cannot directly access elements by index; must traverse the list.
+Complexity: More complex to implement and manage compared to arrays.

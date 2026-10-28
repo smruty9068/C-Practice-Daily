@@ -1,0 +1,296 @@
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+import main
+import models
+
+# One shared in-memory database for the duration of the test session.
+TEST_ENGINE = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=TEST_ENGINE
+)
+
+
+@pytest.fixture()
+def client():
+    models.Base.metadata.drop_all(bind=TEST_ENGINE)
+    models.Base.metadata.create_all(bind=TEST_ENGINE)
+
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    main.app.dependency_overrides[main.get_db] = override_get_db
+    with TestClient(main.app) as test_client:
+        yield test_client
+    main.app.dependency_overrides.clear()
+    models.Base.metadata.drop_all(bind=TEST_ENGINE)
+
+
+def create_department(client, name="Central", city="Bhubaneswar"):
+    response = client.post(
+        "/departments", json={"name": name, "city": city}
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def create_employee(
+    client, department_id, name, role, salary=30000, years_experience=2
+):
+    response = client.post(
+        f"/departments/{department_id}/employees",
+        json={
+            "name": name,
+            "role": role,
+            "salary": salary,
+            "years_experience": years_experience,
+        },
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+# 01. Create department successfully.
+def test_create_department(client):
+    response = client.post(
+        "/departments", json={"name": "Technology", "city": "Pune"}
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["id"] > 0
+    assert body["name"] == "Technology"
+    assert body["city"] == "Pune"
+
+
+# 02. Reject an empty department name.
+def test_department_name_cannot_be_empty(client):
+    response = client.post(
+        "/departments", json={"name": "", "city": "Pune"}
+    )
+    assert response.status_code == 422
+
+
+# 03. Reject an empty department city.
+def test_department_city_cannot_be_empty(client):
+    response = client.post(
+        "/departments", json={"name": "Technology", "city": ""}
+    )
+    assert response.status_code == 422
+
+
+# 04. Create an employee in an existing department.
+def test_create_employee(client):
+    department = create_department(client)
+    response = client.post(
+        f"/departments/{department['id']}/employees",
+        json={
+            "name": "Asha",
+            "role": "Developer",
+            "salary": 45000,
+            "years_experience": 3,
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["id"] > 0
+    assert body["name"] == "Asha"
+    assert body["role"] == "Developer"
+    assert body["salary"] == 45000
+    assert body["years_experience"] == 3
+
+
+# 05. Employee output must hide the foreign key.
+def test_employee_response_hides_department_id(client):
+    department = create_department(client)
+    employee = create_employee(client, department["id"], "Asha", "Developer")
+    assert "department_id" not in employee
+
+
+# 06. A nonexistent department cannot receive an employee.
+def test_create_employee_for_missing_department_returns_404(client):
+    response = client.post(
+        "/departments/999/employees",
+        json={
+            "name": "Asha",
+            "role": "Developer",
+            "salary": 45000,
+            "years_experience": 3,
+        },
+    )
+    assert response.status_code == 404
+
+
+# 07. Fetch department and nested employees.
+def test_get_department_with_employees(client):
+    department = create_department(client, "Engineering", "Hyderabad")
+    create_employee(client, department["id"], "Asha", "Developer")
+    create_employee(client, department["id"], "Ravi", "Tester")
+    response = client.get(f"/departments/{department['id']}/employees")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == department["id"]
+    assert body["name"] == "Engineering"
+    assert body["city"] == "Hyderabad"
+    assert len(body["employees"]) == 2
+    assert all("department_id" not in item for item in body["employees"])
+
+
+# 08. Exact role filter: only matching roles should be returned.
+def test_role_filter_is_exact(client):
+    department = create_department(client)
+    create_employee(client, department["id"], "Asha", "Developer")
+    create_employee(client, department["id"], "Ravi", "Senior Developer")
+    create_employee(client, department["id"], "Mina", "Developer")
+    response = client.get(
+        f"/departments/{department['id']}/employees",
+        params={"role": "Developer"},
+    )
+    assert response.status_code == 200
+    names = [item["name"] for item in response.json()["employees"]]
+    assert set(names) == {"Asha", "Mina"}
+    assert len(names) == 2
+
+
+# 09. Role filter is case-sensitive and exact.
+def test_role_filter_does_not_match_partial_or_different_case(client):
+    department = create_department(client)
+    create_employee(client, department["id"], "Asha", "Developer")
+    response = client.get(
+        f"/departments/{department['id']}/employees",
+        params={"role": "developer"},
+    )
+    assert response.status_code == 200
+    assert response.json()["employees"] == []
+
+
+# 10. Sort by employee name ascending.
+def test_sort_by_name(client):
+    department = create_department(client)
+    create_employee(client, department["id"], "Zoya", "Developer")
+    create_employee(client, department["id"], "Aman", "Developer")
+    create_employee(client, department["id"], "Mina", "Tester")
+    response = client.get(
+        f"/departments/{department['id']}/employees",
+        params={"sort": "name"},
+    )
+    assert response.status_code == 200
+    names = [item["name"] for item in response.json()["employees"]]
+    assert names == ["Aman", "Mina", "Zoya"]
+
+
+# 11. Sort by salary ascending.
+def test_sort_by_salary(client):
+    department = create_department(client)
+    create_employee(client, department["id"], "Asha", "Developer", 50000)
+    create_employee(client, department["id"], "Ravi", "Tester", 25000)
+    create_employee(client, department["id"], "Mina", "Developer", 35000)
+    response = client.get(
+        f"/departments/{department['id']}/employees",
+        params={"sort": "salary"},
+    )
+    assert response.status_code == 200
+    salaries = [item["salary"] for item in response.json()["employees"]]
+    assert salaries == [25000, 35000, 50000]
+
+
+# 12. Filtering and sorting must work together.
+def test_role_filter_and_sort_together(client):
+    department = create_department(client)
+    create_employee(client, department["id"], "Zoya", "Developer", 50000)
+    create_employee(client, department["id"], "Aman", "Tester", 25000)
+    create_employee(client, department["id"], "Mina", "Developer", 35000)
+    response = client.get(
+        f"/departments/{department['id']}/employees",
+        params={"role": "Developer", "sort": "salary"},
+    )
+    assert response.status_code == 200
+    employees = response.json()["employees"]
+    assert [item["name"] for item in employees] == ["Mina", "Zoya"]
+    assert [item["salary"] for item in employees] == [35000, 50000]
+
+
+# 13. PUT returns the revised values.
+def test_put_returns_updated_values(client):
+    department = create_department(client)
+    employee = create_employee(
+        client, department["id"], "Asha", "Developer", 30000, 1
+    )
+    response = client.put(
+        f"/departments/{department['id']}/employees/{employee['id']}",
+        json={
+            "name": "Asha Rao",
+            "role": "Senior Developer",
+            "salary": 60000,
+            "years_experience": 5,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "Asha Rao"
+    assert body["role"] == "Senior Developer"
+    assert body["salary"] == 60000
+    assert body["years_experience"] == 5
+    assert "department_id" not in body
+
+
+# 14. PUT persists updated values in the database.
+def test_put_persists_updated_values(client):
+    department = create_department(client)
+    employee = create_employee(
+        client, department["id"], "Asha", "Developer", 30000, 1
+    )
+    client.put(
+        f"/departments/{department['id']}/employees/{employee['id']}",
+        json={
+            "name": "Asha Rao",
+            "role": "Lead",
+            "salary": 70000,
+            "years_experience": 6,
+        },
+    )
+    response = client.get(f"/departments/{department['id']}/employees")
+    assert response.status_code == 200
+    saved = response.json()["employees"][0]
+    assert saved["name"] == "Asha Rao"
+    assert saved["role"] == "Lead"
+    assert saved["salary"] == 70000
+    assert saved["years_experience"] == 6
+
+
+# 15. Updating one employee must leave sibling employees unchanged.
+def test_put_updates_one_employee_and_leaves_siblings(client):
+    department = create_department(client)
+    first = create_employee(
+        client, department["id"], "Asha", "Developer", 30000, 1
+    )
+    second = create_employee(
+        client, department["id"], "Ravi", "Tester", 40000, 3
+    )
+    response = client.put(
+        f"/departments/{department['id']}/employees/{first['id']}",
+        json={
+            "name": "Asha Updated",
+            "role": "Lead Developer",
+            "salary": 65000,
+            "years_experience": 5,
+        },
+    )
+    assert response.status_code == 200
+    listing = client.get(f"/departments/{department['id']}/employees").json()
+    by_id = {item["id"]: item for item in listing["employees"]}
+    assert by_id[first["id"]]["name"] == "Asha Updated"
+    assert by_id[second["id"]]["name"] == "Ravi"
+    assert by_id[second["id"]]["role"] == "Tester"
+    assert by_id[second["id"]]["salary"] == 40000
+    assert by_id[second["id"]]["years_experience"] == 3
